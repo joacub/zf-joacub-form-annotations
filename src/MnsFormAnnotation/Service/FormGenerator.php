@@ -16,6 +16,7 @@ class FormGenerator implements FactoryInterface {
 
     protected $className;
     protected $keyName;
+    protected $cache;
 
     public function setClass($className) {
         $this->className = $className;
@@ -42,7 +43,7 @@ class FormGenerator implements FactoryInterface {
 
     public function createService(ServiceLocatorInterface $serviceLocator) {
         $config = $serviceLocator->get('config');
-        if (isset($config['mns_cache_config'])) {
+        if ($config['mns_cache_config']['caching'] === true) {
             $cacheConfig = $config['mns_cache_config'];
             //initialize cache
             $this->cache = StorageFactory::factory($cacheConfig);
