@@ -17,12 +17,12 @@ class IndexController extends AbstractActionController {
         $user->setName('FullName');
         $user->setEmail('myemail@tld.com');
         $user->setAddress('Test Address');
-
+        
         $form = $this->getServiceLocator()->get('formGenerator')
-                ->setClass('\MnsFormAnnotation\Entity\User')
+                ->setClass('CustomediaGestionSales\Entity\Sales')
                 ->getForm();
 
-        $form->bind($user);       
+        //$form->bind($user);       
         return array('form' => $form);        
     }
     

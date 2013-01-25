@@ -52,5 +52,32 @@ return array(
             'MnsFormAnnotation' => __DIR__ . '/../view',
         ),
     ),   
+    'doctrine' => array(
+        'connection' => array(
+            'orm_default' => array(
+                'driverClass' => 'Doctrine\DBAL\Driver\PDOMySql\Driver',
+                'params' => array(
+                    'host'     => 'localhost',
+                    'port'     => '3306',
+                    'user'     => 'username',
+                    'password' => 'password',
+                    'dbname'   => 'database_name',
+                )
+            )
+        ),
+        'driver' => array(
+            __NAMESPACE__ . '_driver' => array(
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => array(__DIR__ . '/../src/' . __NAMESPACE__ . '/Entity')
+            ),
+            'orm_default' => array(
+                'drivers' => array(
+                    __NAMESPACE__ . '\Entity' => __NAMESPACE__ . '_driver'
+                ),
+            ),
+        ),
+        
+    ),
 );
 ?>

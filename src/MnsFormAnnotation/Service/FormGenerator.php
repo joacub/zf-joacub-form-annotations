@@ -3,9 +3,10 @@
 namespace MnsFormAnnotation\Service;
 
 use Zend\Cache\StorageFactory;
-use Zend\Form\Annotation\AnnotationBuilder;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use DoctrineORMModule\Form\Annotation\AnnotationBuilder;
+use Nette\Diagnostics\Debugger;
 
 /**
  * Use ZF2 form annotations builder to generate a form
@@ -17,6 +18,7 @@ class FormGenerator implements FactoryInterface {
     protected $className;
     protected $keyName;
     protected $cache;
+    protected $em;
 
     public function setClass($className) {
         $this->className = $className;
@@ -26,7 +28,7 @@ class FormGenerator implements FactoryInterface {
     }
 
     public function getForm() {
-        $builder = new AnnotationBuilder();
+        $builder = new AnnotationBuilder($this->em);
         if ($this->cache) {
             if (!($this->cache->hasItem($this->keyName))) {
                 $form = $builder->createForm(new $this->className);
@@ -38,10 +40,25 @@ class FormGenerator implements FactoryInterface {
         } else {    //Do not use cache
             $form = $builder->createForm(new $this->className);
         }
+        
+        $elements = $form->getElements();
+        
+        foreach($elements as $element) {
+            if(method_exists($element, 'getProxy')){
+                $proxy = $element->getProxy();
+                if(method_exists($proxy, 'setObjectManager')){
+                    $proxy->setObjectManager($this->em);
+                }
+            }
+        }
+        
+        $hydrator = new \DoctrineModule\Stdlib\Hydrator\DoctrineObject($this->em, $this->className);
+        $form->setHydrator($hydrator);
         return $form;
     }
 
     public function createService(ServiceLocatorInterface $serviceLocator) {
+        $this->em = $serviceLocator->get('doctrine.entitymanager.orm_default');
         $config = $serviceLocator->get('config');
         if ($config['mns_cache_config']['caching'] === true) {
             $cacheConfig = $config['mns_cache_config'];
@@ -50,7 +67,12 @@ class FormGenerator implements FactoryInterface {
         }
         return $this;  //fluent interface
     }
+    
 
+    public function __call($property, $value)
+    {
+        exit;
+    }
 }
 
 ?>
