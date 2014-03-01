@@ -48,12 +48,9 @@ return array(
         ),
     ),
     'view_manager' => array(
-<<<<<<< HEAD
         'template_path_stack' => array(
             __DIR__ . '/../view',
         ),
-=======
->>>>>>> 8712a81b47fc82ba2e009d7e120d7c3761baa15f
         'template_map' => include __DIR__  .'/../template_map.php',
     ),   
     'doctrine' => array(
