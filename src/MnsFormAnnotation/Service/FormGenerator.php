@@ -3,6 +3,9 @@
 namespace MnsFormAnnotation\Service;
 
 use Zend\Cache\StorageFactory;
+use Zend\Form\Element\Collection;
+use Zend\Form\Fieldset;
+use Zend\Form\InputFilterProviderFieldset;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use DoctrineORMModule\Form\Annotation\AnnotationBuilder;
@@ -42,19 +45,63 @@ class FormGenerator implements FactoryInterface {
         }
         
         $elements = $form->getElements();
-        
+        $fieldsets = $form->getFieldsets();
+
+        $this->settingElements($elements);
+        $this->settingFieldsets($fieldsets);
+
+        $hydrator = new \DoctrineModule\Stdlib\Hydrator\DoctrineObject($this->em, $this->className);
+        $form->setHydrator($hydrator);
+
+        return $form;
+    }
+
+    protected function settingElements($elements)
+    {
         foreach($elements as $element) {
-            if(method_exists($element, 'getProxy')){
+            if (method_exists($element, 'getProxy')) {
                 $proxy = $element->getProxy();
-                if(method_exists($proxy, 'setObjectManager')){
+                if (method_exists($proxy, 'setObjectManager')) {
                     $proxy->setObjectManager($this->em);
                 }
             }
         }
-        
-        $hydrator = new \DoctrineModule\Stdlib\Hydrator\DoctrineObject($this->em, $this->className);
-        $form->setHydrator($hydrator);
-        return $form;
+    }
+
+    protected function settingFieldsets($fieldsets, $hydrator = null)
+    {
+        foreach($fieldsets as $fieldset) {
+
+            if($fieldset instanceof Collection) {
+                $hydrator = new \DoctrineModule\Stdlib\Hydrator\DoctrineObject($this->em, $fieldset->getOption('target_class'));
+                $fieldset->setHydrator($hydrator);
+                $fieldset->setAllowedObjectBindingClass($fieldset->getOption('target_class'));
+                $targetElement = $fieldset->getTargetElement();
+                if($targetElement instanceof InputFilterProviderFieldset) {
+                    $class = $fieldset->getOption('target_class');
+                    $targetElement->setObject(new $class());
+                    $targetElement->setHydrator($hydrator);
+                    $targetElement->setAllowedObjectBindingClass($fieldset->getOption('target_class'));
+                }
+
+//                Debugger::$maxDepth = 5;
+//                Debugger::dump($fieldset->setOption('hydrator', $hydrator)->getOptions());exit;
+            } else {
+                /**
+                 * @var Fieldset $fieldset
+                 */
+                $hydrator = new \DoctrineModule\Stdlib\Hydrator\DoctrineObject($this->em, $fieldset->getOption('target_class'));
+                $fieldset->setHydrator($hydrator);
+
+                $fieldset->setAllowedObjectBindingClass($fieldset->getOption('target_class'));
+            }
+
+            $this->settingElements($fieldset->getElements());
+
+
+            $this->settingFieldsets($fieldset->getFieldsets(), $hydrator);
+        }
+
     }
 
     public function createService(ServiceLocatorInterface $serviceLocator) {
