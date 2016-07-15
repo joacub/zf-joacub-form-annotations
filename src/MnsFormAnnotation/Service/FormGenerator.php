@@ -2,10 +2,14 @@
 
 namespace MnsFormAnnotation\Service;
 
+use Interop\Container\ContainerInterface;
+use Interop\Container\Exception\ContainerException;
 use Zend\Cache\StorageFactory;
 use Zend\Form\Element\Collection;
 use Zend\Form\Fieldset;
 use Zend\Form\InputFilterProviderFieldset;
+use Zend\ServiceManager\Exception\ServiceNotCreatedException;
+use Zend\ServiceManager\Exception\ServiceNotFoundException;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use DoctrineORMModule\Form\Annotation\AnnotationBuilder;
@@ -104,9 +108,15 @@ class FormGenerator implements FactoryInterface {
 
     }
 
-    public function createService(ServiceLocatorInterface $serviceLocator) {
-        $this->em = $serviceLocator->get('doctrine.entitymanager.orm_default');
-        $config = $serviceLocator->get('config');
+    public function createService(ServiceLocatorInterface $container)
+    {
+        return $this($container, ModuleManager::class);
+    }
+
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $this->em = $container->get('doctrine.entitymanager.orm_default');
+        $config = $container->get('config');
         if ($config['mns_cache_config']['caching'] === true) {
             $cacheConfig = $config['mns_cache_config'];
             //initialize cache
@@ -114,12 +124,7 @@ class FormGenerator implements FactoryInterface {
         }
         return $this;  //fluent interface
     }
-    
 
-    public function __call($property, $value)
-    {
-        exit;
-    }
 }
 
 ?>
